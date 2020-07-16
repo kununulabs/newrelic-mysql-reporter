@@ -1,0 +1,4 @@
+metrics:
+  - name: "ExampleMetric"
+    comment: "This is just an example metric, reporting that the database is accessible."
+    query: "SELECT 1;"

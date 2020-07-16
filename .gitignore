@@ -1,0 +1,5 @@
+.vscode/
+*.yaml
+!config-example.yaml
+.env
+main
