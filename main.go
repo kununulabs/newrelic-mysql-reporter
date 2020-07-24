@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -44,7 +45,15 @@ func main() {
 		panic(err)
 	}
 
-	mysqlConn, err := sql.Open("mysql", os.Getenv("DATABASE_URL"))
+	mysqlURL := os.Getenv("DATABASE_URL")
+	mysqlUsername := os.Getenv("DATABASE_USERNAME")
+	mysqlPassword := os.Getenv("DATABASE_PASSWORD")
+
+	if len(mysqlUsername) > 0 || len(mysqlPassword) > 0 {
+		mysqlURL = fmt.Sprintf("%s:%s@%s", mysqlUsername, mysqlPassword, mysqlURL)
+	}
+
+	mysqlConn, err := sql.Open("mysql", mysqlURL)
 	if err != nil {
 		panic(err)
 	}
