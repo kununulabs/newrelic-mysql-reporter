@@ -2,10 +2,9 @@ FROM golang:1.15 AS builder
 WORKDIR /app
 COPY . .
 #RUN go mod download && go mod verify
-#RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /main
-RUN go build -ldflags="-w -s" -o /main
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /main
 
-# compress the binary
+# compress the binary (only saved like 4mb right now)
 #FROM alpine:latest AS upx
 #RUN apk add --no-cache upx >/dev/null
 #COPY --from=builder /main /main
@@ -18,4 +17,3 @@ USER nobody:nobody
 #COPY --from=upx /main /main
 COPY --from=builder /main /main
 ENTRYPOINT [ "/main" ]
-CMD [ "/config.yaml" ]
