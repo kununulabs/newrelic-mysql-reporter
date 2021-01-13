@@ -23,17 +23,14 @@ func GetURL(region, account string) string {
 }
 
 func main() {
-	metrics, err := config.GetMetrics(os.Getenv("METRICS_FILE"))
+	metrics, err := config.GetMetrics(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	attributes := map[string]interface{}{}
-	if attributesFile := os.Getenv("ATTRIBUTES_FILE"); len(attributesFile) > 0 {
-		attributes, err = config.GetAttributes(attributesFile)
-		if err != nil {
-			panic(err)
-		}
+	attributes, err := config.GetAttributes(os.Args[2])
+	if err != nil && len(os.Args[2]) > 1 {
+		panic(err)
 	}
 
 	mysqlConnection, err := mysql.GetConnection(

@@ -9,10 +9,9 @@
 docker run -d --name newrelic-mysql-reporter-example-db -e MYSQL_ROOT_PASSWORD=example -p 3306:3306 mysql:5.7
 sleep 30
 cat >.env <<ENV
-NR_ACCOUNT_ID=1234567
-NR_API_KEY=xxx
-METRICS_FILE=/metrics.yaml
-#ATTRIBUTES_FILE=/attributes.yaml
+NEW_RELIC_ACCOUNT_ID=1234567
+NEW_RELIC_INSIGHTS_INSERT_KEY=xxx
+NEW_RELIC_REGION=eu
 DATABASE_URL=root:example@tcp(172.17.0.1:3306)/information_schema
 ENV
 make example
