@@ -23,12 +23,12 @@ func GetURL(region, account string) string {
 }
 
 func main() {
-	metrics, err := yaml.GetMetrics(os.Args[1])
+	metrics, err := yaml.GetMetricsFromFile(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	attributes, err := yaml.GetAttributes(os.Args[2])
+	attributes, err := yaml.GetAttributesFromFile(os.Args[2])
 	if err != nil && len(os.Args[2]) > 1 {
 		panic(err)
 	}
