@@ -36,7 +36,7 @@ func main() {
 	mysqlConnection, err := mysql.GetConnection(
 		os.Getenv("DATABASE_URL"),
 		os.Getenv("DATABASE_USERNAME"),
-		os.Getenv("DATABASE_USERNAME"),
+		os.Getenv("DATABASE_PASSWORD"),
 	)
 	if err != nil {
 		panic(err)
