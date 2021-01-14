@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kununulabs/newrelic-mysql-reporter/config"
 	"github.com/kununulabs/newrelic-mysql-reporter/mysql"
+	"github.com/kununulabs/newrelic-mysql-reporter/yaml"
 	"github.com/newrelic/newrelic-telemetry-sdk-go/telemetry"
 )
 
@@ -23,12 +23,12 @@ func GetURL(region, account string) string {
 }
 
 func main() {
-	metrics, err := config.GetMetrics(os.Args[1])
+	metrics, err := yaml.GetMetrics(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	attributes, err := config.GetAttributes(os.Args[2])
+	attributes, err := yaml.GetAttributes(os.Args[2])
 	if err != nil && len(os.Args[2]) > 1 {
 		panic(err)
 	}

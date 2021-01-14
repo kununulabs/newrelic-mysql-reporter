@@ -4,5 +4,5 @@
 !go.sum
 !main.go
 
-!config/
 !mysql/
+!yaml/

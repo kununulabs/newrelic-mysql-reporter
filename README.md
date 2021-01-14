@@ -1,7 +1,7 @@
 # A MySQL Database Custom Metrics Reporter for New Relic
 
 - Create an .env file with all configurations needed (see .env-example)
-- Create a configuration file with your metrics (see config-example.yaml)
+- Create a configuration file with your metrics (see yaml/metrics-example.yaml)
 - Build the image: `make docker`
 
 ## Running the example

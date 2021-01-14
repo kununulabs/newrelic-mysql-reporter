@@ -4,5 +4,5 @@
 main
 newrelic-mysql-reporter
 
-config/*.yaml
-!config/*-example.yaml
+yaml/*.yaml
+!yaml/*-example.yaml
