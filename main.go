@@ -1,98 +1,82 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"log"
 	"os"
-	newrelic "github.com/newrelic/go-insights/client"
+	"strings"
+	"time"
+
+	"github.com/kununulabs/newrelic-mysql-reporter/mysql"
+	"github.com/kununulabs/newrelic-mysql-reporter/yaml"
+	"github.com/newrelic/newrelic-telemetry-sdk-go/telemetry"
 )
 
-const DEFAULT_CONFIG_FILE = "/config.yaml"
-
-type Metric struct {
-	Comment string `yaml:"comment"`
-	Name    string `yaml:"name"`
-	Query   string `yaml:"query"`
-}
-
-type Config struct {
-	Metrics []Metric `yaml:"metrics"`
-}
-
-type Event struct {
-	Type  string `json:"eventType"`
-	Value int    `json:"eventValue"`
+// GetURL returns the insights api url based on account id and region
+func GetURL(region, account string) string {
+	return strings.ToLower(fmt.Sprintf(
+		"https://insights-collector.%s01.nr-data.net/v1/accounts/%s/events",
+		region,
+		account,
+	))
 }
 
 func main() {
-	configFile := os.Getenv("CONFIG_FILE")
-	if len(configFile) < 1 {
-		configFile = DEFAULT_CONFIG_FILE
-	}
-
-	configYaml, err := ioutil.ReadFile(configFile)
+	metrics, err := yaml.GetMetricsFromFile(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	config := Config{}
+	attributes, err := yaml.GetAttributesFromFile(os.Args[2])
+	if err != nil && len(os.Args[2]) > 1 {
+		panic(err)
+	}
 
-	err = yaml.Unmarshal(configYaml, &config)
+	mysqlConnection, err := mysql.GetConnection(
+		os.Getenv("DATABASE_URL"),
+		os.Getenv("DATABASE_USERNAME"),
+		os.Getenv("DATABASE_PASSWORD"),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	mysqlURL := os.Getenv("DATABASE_URL")
-	mysqlUsername := os.Getenv("DATABASE_USERNAME")
-	mysqlPassword := os.Getenv("DATABASE_PASSWORD")
+	defer mysqlConnection.Close()
 
-	if len(mysqlUsername) > 0 || len(mysqlPassword) > 0 {
-		mysqlURL = fmt.Sprintf("%s:%s@%s", mysqlUsername, mysqlPassword, mysqlURL)
-	}
-
-	mysqlConn, err := sql.Open("mysql", mysqlURL)
+	harvester, err := telemetry.NewHarvester(
+		telemetry.ConfigAPIKey(os.Getenv("NEW_RELIC_INSIGHTS_INSERT_KEY")),
+		telemetry.ConfigBasicAuditLogger(os.Stdout),
+		telemetry.ConfigBasicDebugLogger(os.Stdout),
+		telemetry.ConfigBasicErrorLogger(os.Stdout),
+		telemetry.ConfigEventsURLOverride(GetURL(
+			os.Getenv("NEW_RELIC_REGION"),
+			os.Getenv("NEW_RELIC_ACCOUNT_ID"),
+		)),
+		telemetry.ConfigHarvestPeriod(0),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	defer mysqlConn.Close()
+	for _, metric := range metrics {
+		result := 0
 
-	err = mysqlConn.Ping()
-	if err != nil {
-		panic(err)
-	}
-
-	nrClient := newrelic.NewInsertClient(os.Getenv("NR_API_KEY"), os.Getenv("NR_ACCOUNT_ID"))
-
-	nrCustomURL := os.Getenv("NR_API_URL")
-	if len(nrCustomURL) > 0 {
-		nrClient.UseCustomURL(nrCustomURL)
-	}
-
-	// TODO: https://github.com/newrelic/go-insights/issues/16
-	//err = nrClient.Validate()
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	// make sure everything is sent before the program exits
-	defer nrClient.Flush()
-
-	// TODO: Don't panic in this loop, give other metrics a chance to check?
-	for _, metric := range config.Metrics {
-		event := Event{Type: metric.Name}
-
-		err = mysqlConn.QueryRow(metric.Query).Scan(&event.Value)
-		if err != nil {
-			panic(err)
+		if err := mysqlConnection.QueryRow(metric.Query).Scan(&result); err != nil {
+			log.Printf("%s: %s\n", metric.Name, err.Error())
+			continue
 		}
 
-		err = nrClient.PostEvent(event)
-		if err != nil {
-			panic(err)
-		}
+		log.Printf("%s: %d\n", metric.Name, result)
+
+		attributes["value"] = result
+
+		harvester.RecordEvent(telemetry.Event{
+			EventType:  metric.Name,
+			Timestamp:  time.Now(),
+			Attributes: attributes,
+		})
 	}
+
+	harvester.HarvestNow(context.Background())
 }

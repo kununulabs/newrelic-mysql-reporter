@@ -1,12 +1,19 @@
-# a mysql database custom metrics reporter for newrelic
+# A MySQL Database Custom Metrics Reporter for New Relic
 
 - Create an .env file with all configurations needed (see .env-example)
-- Create a configuration file with your metrics (see config-example.yaml)
-- `make docker`
-- `make run`
+- Create a configuration file with your metrics (see yaml/metrics-example.yaml)
+- Build the image: `make docker`
 
-## Example run
-
+## Running the example
 ```bash
-docker run -i -t --rm -e NR_API_KEY=xxx -e NR_ACCOUNT_ID=1234567 -e DATABASE_URL="root:pwd@tcp(127.0.0.1:3306)/information_schema" -v /path/to/my-config.yml:/config.yaml kununulabs/newrelic-mysql-reporter:latest
+docker run -d --name newrelic-mysql-reporter-example-db -e MYSQL_ROOT_PASSWORD=example -p 3306:3306 mysql:5.7
+sleep 30
+cat >.env <<ENV
+NEW_RELIC_ACCOUNT_ID=1234567
+NEW_RELIC_INSIGHTS_INSERT_KEY=xxx
+NEW_RELIC_REGION=eu
+DATABASE_URL=root:example@tcp(172.17.0.1:3306)/information_schema
+ENV
+make example
+docker rm -f newrelic-mysql-reporter-example-db
 ```

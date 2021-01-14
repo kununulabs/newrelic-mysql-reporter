@@ -1,13 +1,14 @@
 BUILD := $(shell git rev-parse --short HEAD 2>/dev/null || echo "latest")
-VERSION := $(shell git describe --tags 2>/dev/null || echo "none")
+VERSION := $(shell git describe --tags 2>/dev/null || echo "latest")
 IMAGE := $(shell basename "$(PWD)"):$(BUILD)
-CONFIG_FILE := $(PWD)/config-example.yaml
 
-.PHONY:
-	run
-
+.PHONY: docker
 docker:
 	-docker build --label "version=$(VERSION)" --label "build=$(BUILD)" -t $(IMAGE) .
 
-run:
-	-docker run -i -t --rm --env-file .env -v "$(CONFIG_FILE):/config.yaml" $(IMAGE)
+.PHONY: example
+example: docker
+	-docker run -it --rm --env-file .env \
+		-v $(PWD)/yaml/attributes-example.yaml:/attributes.yaml \
+		-v $(PWD)/yaml/metrics-example.yaml:/metrics.yaml \
+		$(IMAGE) /metrics.yaml /attributes.yaml
