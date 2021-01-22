@@ -44,14 +44,17 @@ func main() {
 
 	defer mysqlConnection.Close()
 
+	nrAccountID := strings.Trim(os.Getenv("NEW_RELIC_ACCOUNT_ID"), " \n\r")
+	nrInsertKey := strings.Trim(os.Getenv("NEW_RELIC_INSIGHTS_INSERT_KEY"), " \n\r")
+
 	harvester, err := telemetry.NewHarvester(
-		telemetry.ConfigAPIKey(os.Getenv("NEW_RELIC_INSIGHTS_INSERT_KEY")),
+		telemetry.ConfigAPIKey(nrInsertKey),
 		telemetry.ConfigBasicAuditLogger(os.Stdout),
 		telemetry.ConfigBasicDebugLogger(os.Stdout),
 		telemetry.ConfigBasicErrorLogger(os.Stdout),
 		telemetry.ConfigEventsURLOverride(GetURL(
 			os.Getenv("NEW_RELIC_REGION"),
-			os.Getenv("NEW_RELIC_ACCOUNT_ID"),
+			nrAccountID,
 		)),
 		telemetry.ConfigHarvestPeriod(0),
 	)
