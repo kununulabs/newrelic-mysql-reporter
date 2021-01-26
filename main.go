@@ -23,14 +23,13 @@ func GetURL(region, account string) string {
 }
 
 func main() {
-	metrics, err := yaml.GetMetricsFromFile(os.Args[1])
+	config, err := yaml.New(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	attributes, err := yaml.GetAttributesFromFile(os.Args[2])
-	if err != nil && len(os.Args[2]) > 1 {
-		panic(err)
+	if len(config.Metrics) < 1 {
+		panic("No metrics provided. Aborting.")
 	}
 
 	mysqlConnection, err := mysql.GetConnection(
@@ -44,17 +43,14 @@ func main() {
 
 	defer mysqlConnection.Close()
 
-	nrAccountID := strings.Trim(os.Getenv("NEW_RELIC_ACCOUNT_ID"), " \n\r")
-	nrInsertKey := strings.Trim(os.Getenv("NEW_RELIC_INSIGHTS_INSERT_KEY"), " \n\r")
-
 	harvester, err := telemetry.NewHarvester(
-		telemetry.ConfigAPIKey(nrInsertKey),
+		telemetry.ConfigAPIKey(os.Getenv("NEW_RELIC_INSIGHTS_INSERT_KEY")),
 		telemetry.ConfigBasicAuditLogger(os.Stdout),
 		telemetry.ConfigBasicDebugLogger(os.Stdout),
 		telemetry.ConfigBasicErrorLogger(os.Stdout),
 		telemetry.ConfigEventsURLOverride(GetURL(
 			os.Getenv("NEW_RELIC_REGION"),
-			nrAccountID,
+			os.Getenv("NEW_RELIC_ACCOUNT_ID"),
 		)),
 		telemetry.ConfigHarvestPeriod(0),
 	)
@@ -62,7 +58,7 @@ func main() {
 		panic(err)
 	}
 
-	for _, metric := range metrics {
+	for _, metric := range config.Metrics {
 		result := 0
 
 		if err := mysqlConnection.QueryRow(metric.Query).Scan(&result); err != nil {
@@ -72,12 +68,12 @@ func main() {
 
 		log.Printf("%s: %d\n", metric.Name, result)
 
-		attributes["value"] = result
+		config.Attributes["value"] = result
 
 		harvester.RecordEvent(telemetry.Event{
 			EventType:  metric.Name,
 			Timestamp:  time.Now(),
-			Attributes: attributes,
+			Attributes: config.Attributes,
 		})
 	}
 

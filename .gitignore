@@ -1,8 +1,3 @@
 .vscode/
-
 .env
-main
 newrelic-mysql-reporter
-
-yaml/*.yaml
-!yaml/*-example.yaml
