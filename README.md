@@ -1,8 +1,15 @@
 # A MySQL Database Custom Metrics Reporter for New Relic
 
 - Create an .env file with all configurations needed (see .env-example)
-- Create a configuration file with your metrics (see yaml/metrics-example.yaml)
+- Create a configuration file with your metrics (see yaml/example.yaml)
 - Build the image: `make docker`
+
+## Use the official docker image
+https://hub.docker.com/r/kununulabs/newrelic-mysql-reporter
+
+```bash
+docker pull kununulabs/newrelic-mysql-reporter:latest
+```
 
 ## Running the example
 ```bash
