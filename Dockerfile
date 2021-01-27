@@ -17,3 +17,4 @@ USER nobody:nobody
 #COPY --from=upx /main /main
 COPY --from=builder /main /main
 ENTRYPOINT [ "/main" ]
+CMD [ "/config.yaml" ]

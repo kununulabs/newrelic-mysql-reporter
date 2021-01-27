@@ -8,7 +8,4 @@ docker:
 
 .PHONY: example
 example: docker
-	-docker run -it --rm --env-file .env \
-		-v $(PWD)/yaml/attributes-example.yaml:/attributes.yaml \
-		-v $(PWD)/yaml/metrics-example.yaml:/metrics.yaml \
-		$(IMAGE) /metrics.yaml /attributes.yaml
+	-docker run -it --rm --env-file .env -v $(PWD)/yaml/example.yaml:/config.yaml $(IMAGE)
