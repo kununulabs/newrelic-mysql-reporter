@@ -68,12 +68,16 @@ func main() {
 
 		log.Printf("%s: %d\n", metric.Name, result)
 
-		config.Attributes["value"] = result
+		attributes := make(map[string]interface{}, len(config.Attributes)+1)
+		for key, val := range config.Attributes {
+			attributes[key] = val
+		}
+		attributes["value"] = result
 
 		harvester.RecordEvent(telemetry.Event{
 			EventType:  metric.Name,
 			Timestamp:  time.Now(),
-			Attributes: config.Attributes,
+			Attributes: attributes,
 		})
 	}
 
